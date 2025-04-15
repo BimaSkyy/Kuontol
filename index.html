@@ -77,7 +77,7 @@
       <div class="stats">followers: <span id="followers">326</span><br />active: yes</div>
       <button id="followBtn" onclick="toggleFollow()">+ Ikuti</button>
       <button class="form-btn" onclick="showForm()">Buat Profilemu</button>
-      <div class="angka-random">angka: <span id="randomNumber">0</span></div>
+      <div class="angka-random">melihat: <span id="randomNumber">0</span></div>
       <div id="signal">sinyal dukungan<canvas id="graph"></canvas></div>
     </div>
 
@@ -217,7 +217,7 @@
     setInterval(drawSignal, 1000);
 
     function updateRandomNumber() {
-      const random = Math.floor(Math.random() * 9846272) + 1;
+      const random = Math.floor(Math.random() * 72) + 1;
       randomNumberEl.textContent = random.toLocaleString();
     }
     setInterval(updateRandomNumber, 1000);
