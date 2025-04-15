@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=1024"> 
@@ -7,68 +6,72 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-    body, html { height: 100%; width: 100%; background: radial-gradient(circle, #a8edea, #fed6e3); }
+    body, html { height: 100%; width: 100%; background: radial-gradient(circle, #a8edea, #fed6e3); }.welcome-screen, .profile-screen, .form-screen {
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  height: 100vh; position: absolute; top: 0; left: 0; width: 100%;
+  background-color: rgba(0, 0, 0, 0.8); color: white; z-index: 10;
+}
 
-    .welcome-screen, .profile-screen, .form-screen {
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      height: 100vh; position: absolute; top: 0; left: 0; width: 100%;
-      background-color: rgba(0, 0, 0, 0.8); color: white; z-index: 10;
-    }
+.welcome-screen h1 { font-size: 2em; margin-bottom: 20px; }
+.welcome-screen button { padding: 10px 20px; font-size: 1em; border: none; background-color: #fff; color: #333; border-radius: 8px; cursor: pointer; }
 
-    .welcome-screen h1 { font-size: 2em; margin-bottom: 20px; }
-    .welcome-screen button { padding: 10px 20px; font-size: 1em; border: none; background-color: #fff; color: #333; border-radius: 8px; cursor: pointer; }
+.container { padding: 20px; display: flex; flex-direction: column; align-items: center; }
 
-    .container { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+.profile-box {
+  background-color: white;
+  padding: 0;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 300px;
+  overflow: hidden;
+  margin: 20px;
+}
 
-    .profile-box {
-      background-color: white;
-      padding: 0;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      width: 300px;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
+.name { font-weight: 700; font-size: 1.5em; color: white; background-color: #222; padding: 10px 0; width: 100%; }
+.profile-box img { width: 100px; height: 100px; object-fit: cover; border-radius: 20px; margin: 15px 0 10px; }
+.description { font-size: 0.9em; color: #555; margin-bottom: 15px; padding: 0 10px; }
+.stats { font-size: 0.9em; margin-bottom: 10px; }
+#followBtn, .form-btn { background-color: #4CAF50; color: white; border: none; padding: 10px 15px; font-size: 1em; border-radius: 10px; cursor: pointer; margin: 5px; }
 
-    .name { font-weight: 700; font-size: 1.5em; color: white; background-color: #222; padding: 10px 0; width: 100%; }
-    .profile-box img { width: 100px; height: 100px; object-fit: cover; border-radius: 20px; margin: 15px 0 10px; }
-    .description { font-size: 0.9em; color: #555; margin-bottom: 15px; padding: 0 10px; }
-    .stats { font-size: 0.9em; margin-bottom: 10px; }
-    #followBtn, .form-btn { background-color: #4CAF50; color: white; border: none; padding: 10px 15px; font-size: 1em; border-radius: 10px; cursor: pointer; margin: 5px; }
+#signal { background-color: #111; color: white; border-radius: 15px; padding: 10px; width: 90%; margin-bottom: 20px; }
+canvas { width: 100%; height: 80px; }
 
-    #signal { background-color: #111; color: white; border-radius: 15px; padding: 10px; width: 90%; margin-bottom: 20px; }
-    canvas { width: 100%; height: 80px; }
+.angka-random { margin-top: 10px; font-size: 1.2em; color: #333; font-weight: bold; }
 
-    .angka-random { margin-top: 10px; font-size: 1.2em; color: #333; font-weight: bold; }
+.form-screen input, .form-screen textarea {
+  margin: 10px 0;
+  padding: 10px;
+  width: 80%;
+  border: none;
+  border-radius: 8px;
+}
 
-    .form-screen input, .form-screen textarea {
-      margin: 10px 0;
-      padding: 10px;
-      width: 80%;
-      border: none;
-      border-radius: 8px;
-    }
+.form-screen input[type="file"] {
+  background-color: white;
+}
 
-    .form-screen input[type="file"] {
-      background-color: white;
-    }
+.form-screen button {
+  margin: 10px 5px;
+}
 
-    .form-screen button {
-      margin: 10px 5px;
-    }
+.user-profiles-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
   </style>
 </head>
 <body>
   <div class="welcome-screen" id="welcomeScreen">
     <h1>Hallo Selamat Datang🥀</h1>
     <button onclick="enterSite()">Open</button>
-  </div>
-
-  <div class="container profile-screen" id="mainContent" style="display:none;">
+  </div>  <div class="container profile-screen" id="mainContent" style="display:none;">
     <!-- Profil utama -->
     <div class="profile-box">
       <div class="name">BimaSky</div>
@@ -77,16 +80,12 @@
       <div class="stats">followers: <span id="followers">326</span><br />active: yes</div>
       <button id="followBtn" onclick="toggleFollow()">+ Ikuti</button>
       <button class="form-btn" onclick="showForm()">Buat Profilemu</button>
-      <div class="angka-random">sorotan terakhir: <span id="randomNumber">0</span></div>
+      <div class="angka-random">pengunjung terakhir: <span id="randomNumber">0</span></div>
       <div id="signal">sinyal dukungan<canvas id="graph"></canvas></div>
-    </div>
+    </div><!-- Semua profil user -->
+<div class="user-profiles-wrapper" id="userProfileContainer"></div>
 
-    <!-- Profil user tambahan -->
-    <div id="userProfileContainer"></div>
-  </div>
-
-  <!-- Form Buat Profil -->
-  <div class="form-screen" id="formScreen" style="display:none;">
+  </div>  <!-- Form Buat Profil -->  <div class="form-screen" id="formScreen" style="display:none;">
     <h2>Buat Profilmu Sendiri</h2>
     <input type="text" id="userName" placeholder="Masukkan nama kamu" required />
     <textarea id="userDesc" placeholder="Masukkan deskripsi kamu bebas apa aja" required></textarea>
@@ -96,13 +95,9 @@
       <button class="form-btn" onclick="createUserProfile()">Buat</button>
       <button class="form-btn" onclick="cancelForm()">Cancel</button>
     </div>
-  </div>
-
-  <audio id="bgMusic" loop>
+  </div>  <audio id="bgMusic" loop>
     <source src="musik.mp3" type="audio/mpeg">
-  </audio>
-
-  <script>
+  </audio>  <script>
     const welcomeScreen = document.getElementById('welcomeScreen');
     const mainContent = document.getElementById('mainContent');
     const formScreen = document.getElementById('formScreen');
@@ -141,7 +136,7 @@
       mainContent.style.display = 'flex';
       bgMusic.play();
       updateFollowUI();
-      loadUserProfile();
+      loadUserProfiles();
     }
 
     function showForm() {
@@ -167,37 +162,41 @@
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const userProfile = {
+        const newProfile = {
           name,
           desc,
           wa,
           photo: e.target.result
         };
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        displayUserProfile(userProfile);
+
+        let profiles = JSON.parse(localStorage.getItem('userProfiles')) || [];
+        profiles.push(newProfile);
+        localStorage.setItem('userProfiles', JSON.stringify(profiles));
+        displayUserProfiles(profiles);
+
         formScreen.style.display = 'none';
         mainContent.style.display = 'flex';
       };
       reader.readAsDataURL(photoFile);
     }
 
-    function loadUserProfile() {
-      const data = localStorage.getItem('userProfile');
-      if (data) {
-        const profile = JSON.parse(data);
-        displayUserProfile(profile);
-      }
+    function loadUserProfiles() {
+      const profiles = JSON.parse(localStorage.getItem('userProfiles')) || [];
+      displayUserProfiles(profiles);
     }
 
-    function displayUserProfile(profile) {
-      userProfileContainer.innerHTML = `
-        <div class="profile-box">
-          <div class="name">${profile.name}</div>
-          <img src="${profile.photo}" alt="Foto Kamu" />
-          <div class="description">${profile.desc}</div>
-          <button class="form-btn" onclick="window.location.href='https://wa.me/+${profile.wa}?text=Hai'">Sapa</button>
-        </div>
-      `;
+    function displayUserProfiles(profiles) {
+      userProfileContainer.innerHTML = '';
+      profiles.forEach(profile => {
+        userProfileContainer.innerHTML += `
+          <div class="profile-box">
+            <div class="name">${profile.name}</div>
+            <img src="${profile.photo}" alt="Foto Kamu" />
+            <div class="description">${profile.desc}</div>
+            <button class="form-btn" onclick="window.location.href='https://wa.me/+${profile.wa}?text=Hai'">Sapa</button>
+          </div>
+        `;
+      });
     }
 
     const canvas = document.getElementById('graph');
@@ -217,10 +216,9 @@
     setInterval(drawSignal, 1000);
 
     function updateRandomNumber() {
-      const random = Math.floor(Math.random() * 52) + 1;
+      const random = Math.floor(Math.random() * 72) + 1;
       randomNumberEl.textContent = random.toLocaleString();
     }
     setInterval(updateRandomNumber, 1000);
-  </script>
-</body>
+  </script></body>
 </html>
