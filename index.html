@@ -1,181 +1,129 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Doge Scalping Bot Realistis</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scalping DOGE Bot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
-    <h1 class="text-2xl font-bold text-center mb-6">Doge Scalping Bot</h1><div class="mb-4">
-  <p class="font-semibold">Saldo DOGE:</p>
-  <p id="saldoDoge">20 DOGE</p>
-</div>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-xl mx-auto mt-10 bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-4 text-center">Bot Scalping DOGE 20</h1>
 
-<div class="mb-4">
-  <label class="block font-semibold mb-1">Set Harga Beli Manual ($):</label>
-  <input id="inputHargaBeli" type="number" step="0.00001" class="w-full p-2 border rounded" placeholder="Misal 0.15500">
-</div>
+    <div class="mb-4">
+      <p>Harga DOGE Realtime: <span id="price" class="font-bold text-blue-600">-</span></p>
+      <p>Candle: <span id="candle" class="font-bold">-</span></p>
+    </div>
 
-<div class="mb-4">
-  <label class="block font-semibold mb-1">Set Harga Jual Target ($):</label>
-  <input id="inputHargaJual" type="number" step="0.00001" class="w-full p-2 border rounded" placeholder="Misal 0.15700">
-</div>
+    <div class="mb-6">
+      <h2 class="font-bold mb-2">Manual Transaksi</h2>
+      <div class="mb-3">
+        <label class="text-sm">Harga Beli Manual (20 DOGE):</label>
+        <div class="flex gap-2">
+          <input id="hargaBeliManual" type="number" step="0.0001" placeholder="Total USDT" class="flex-1 border rounded px-3 py-1">
+          <button onclick="setManualBeli()" class="bg-green-500 text-white px-3 rounded">Set</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="text-sm">Harga Jual Manual (20 DOGE):</label>
+        <div class="flex gap-2">
+          <input id="hargaJualManual" type="number" step="0.0001" placeholder="Total USDT" class="flex-1 border rounded px-3 py-1">
+          <button onclick="setManualJual()" class="bg-red-500 text-white px-3 rounded">Set</button>
+        </div>
+      </div>
+      <p class="mt-2 text-sm text-gray-700">Keuntungan Real: <span class="font-bold text-green-600" id="realUntung">-</span></p>
+      <p class="text-sm text-gray-700">Kerugian Real: <span class="font-bold text-red-600" id="realRugi">-</span></p>
+      <p class="text-sm text-gray-700">Total Akumulasi Untung: <span class="font-bold text-blue-600" id="totalUntung">0.0000</span> USDT</p>
+    </div>
 
-<div class="mb-4">
-  <p class="font-semibold">Harga Pasar (Realtime):</p>
-  <p id="hargaPasar">Loading...</p>
-</div>
-
-<div class="mb-4">
-  <p class="font-semibold">Fee Transaksi (0.1%):</p>
-  <p id="feeTransaksi">-</p>
-</div>
-
-<div class="mb-4">
-  <p class="font-semibold">Harga Beli Terakhir:</p>
-  <p id="hargaBeli">-</p>
-</div>
-
-<div class="mb-4">
-  <p class="font-semibold">Keuntungan:</p>
-  <p id="untung">-</p>
-</div>
-
-<div class="mt-6 flex space-x-4">
-  <button onclick="beliManual()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Set Harga Beli</button>
-  <button onclick="jualManual()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Set Harga Jual</button>
-</div>
-
-<div class="mt-6 flex space-x-4">
-  <button onclick="beliSekarang()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Saya Telah Membeli</button>
-  <button onclick="jualSekarang()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Saya Telah Menjual</button>
-</div>
-
-<div class="mt-6 text-sm text-gray-500">
-  <p id="candleHint" class="font-semibold text-blue-600"></p>
-</div>
-
-<div class="mt-6 text-sm text-gray-600">
-  <div class="flex justify-between items-center mb-1">
-    <p class="font-semibold">Log Aktivitas:</p>
-    <button onclick="clearLog()" class="text-red-500 hover:underline text-xs">Hapus Semua</button>
+    <div class="bg-gray-100 p-3 rounded h-48 overflow-y-auto text-sm" id="logBox">
+      <p class="text-gray-400 italic">Log Aktivitas akan muncul di sini...</p>
+    </div>
   </div>
-  <div id="logArea" class="space-y-1 max-h-40 overflow-y-auto text-xs bg-gray-100 p-2 rounded"></div>
-</div>
 
-  </div>  <script>
-    const saldoDoge = 20;
-    const feePersen = 0.001; // 0.1%
-    let hargaBeli = null;
-    let hargaJualTarget = null;
-    let lastHarga = null;
-    let previousHarga = null;
-    let lastSignal = '';
+  <script>
+    const priceEl = document.getElementById("price");
+    const candleEl = document.getElementById("candle");
+    const logBox = document.getElementById("logBox");
 
-    async function fetchHarga() {
-      try {
-        const res = await axios.get('https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT');
-        const harga = parseFloat(res.data.price);
-        const totalUSDT = harga * saldoDoge;
-        const fee = totalUSDT * feePersen;
+    let prevPrice = null;
+    let hargaBeliManual = null;
+    let hargaJualManual = null;
+    let fee = 0.004; // biaya trading total beli+jual
+    let totalProfit = parseFloat(localStorage.getItem("dogeTotalProfit") || "0");
 
-        document.getElementById("hargaPasar").innerText = `$${totalUSDT.toFixed(4)} (total)`;
-        document.getElementById("feeTransaksi").innerText = `$${fee.toFixed(5)}`;
+    function updateProfit() {
+      const untungSpan = document.getElementById("realUntung");
+      const rugiSpan = document.getElementById("realRugi");
+      const totalSpan = document.getElementById("totalUntung");
 
-        if (lastHarga !== null) {
-          const hargaEl = document.getElementById("hargaPasar");
-          hargaEl.style.color = harga > lastHarga ? 'green' : harga < lastHarga ? 'red' : 'black';
+      if (hargaBeliManual !== null && hargaJualManual !== null) {
+        const selisih = hargaJualManual - hargaBeliManual;
+        const hasil = selisih - (fee * 1); // total fee 0.004
+        if (hasil >= 0) {
+          untungSpan.innerText = `+$${hasil.toFixed(4)}`;
+          rugiSpan.innerText = "$0.0000";
+        } else {
+          rugiSpan.innerText = `-$${Math.abs(hasil).toFixed(4)}`;
+          untungSpan.innerText = "$0.0000";
         }
 
-        lastHarga = harga;
+        totalProfit += hasil;
+        localStorage.setItem("dogeTotalProfit", totalProfit.toFixed(4));
+        totalSpan.innerText = totalProfit.toFixed(4);
+      }
+    }
 
-        if (hargaBeli !== null) {
-          const untung = (harga - hargaBeli) * saldoDoge - fee;
-          document.getElementById("untung").innerText = `$${untung.toFixed(5)}`;
-          document.getElementById("hargaBeli").innerText = `$${hargaBeli.toFixed(5)}`;
-        }
+    function setManualBeli() {
+      const val = parseFloat(document.getElementById("hargaBeliManual").value);
+      if (!isNaN(val)) {
+        hargaBeliManual = val;
+        logAktivitas("Set harga beli manual: $" + val.toFixed(4));
+        updateProfit();
+      }
+    }
 
-        if (previousHarga !== null) {
-          if (harga > previousHarga + 0.001 && lastSignal !== 'up') {
-            document.getElementById("candleHint").innerText = "Candle naik cepat, pertimbangkan JUAL";
-            logAktivitas("Candle naik cepat!");
-            lastSignal = 'up';
-          } else if (harga < previousHarga - 0.001 && lastSignal !== 'down') {
-            document.getElementById("candleHint").innerText = "Candle turun cepat, pertimbangkan BELI";
-            logAktivitas("Candle turun cepat!");
-            lastSignal = 'down';
+    function setManualJual() {
+      const val = parseFloat(document.getElementById("hargaJualManual").value);
+      if (!isNaN(val)) {
+        hargaJualManual = val;
+        logAktivitas("Set harga jual manual: $" + val.toFixed(4));
+        updateProfit();
+      }
+    }
+
+    function logAktivitas(teks) {
+      const now = new Date().toLocaleTimeString();
+      const p = document.createElement("p");
+      p.innerText = `[${now}] ${teks}`;
+      logBox.appendChild(p);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function fetchDogePrice() {
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT")
+        .then(res => res.json())
+        .then(data => {
+          const price = parseFloat(data.price);
+          priceEl.innerText = "$" + price.toFixed(4);
+
+          if (prevPrice !== null) {
+            if (price > prevPrice) {
+              candleEl.innerHTML = "Naik <span class='text-green-600'>▲</span>";
+            } else if (price < prevPrice) {
+              candleEl.innerHTML = "Turun <span class='text-red-600'>▼</span>";
+            } else {
+              candleEl.innerText = "Stabil";
+            }
           }
-        }
 
-        previousHarga = harga;
-      } catch (e) {
-        document.getElementById("hargaPasar").innerText = `Gagal ambil harga`;
-        logAktivitas("Gagal ambil data harga.");
-      }
+          prevPrice = price;
+        });
     }
 
-    function beliManual() {
-      const input = parseFloat(document.getElementById("inputHargaBeli").value);
-      if (!isNaN(input)) {
-        hargaBeli = input;
-        logAktivitas(`Set harga beli ke $${input.toFixed(5)}`);
-      }
-    }
-
-    function jualManual() {
-      const input = parseFloat(document.getElementById("inputHargaJual").value);
-      if (!isNaN(input)) {
-        hargaJualTarget = input;
-        logAktivitas(`Set harga jual target ke $${input.toFixed(5)}`);
-      }
-    }
-
-    function beliSekarang() {
-      hargaBeli = lastHarga;
-      logAktivitas(`Beli DOGE di $${hargaBeli.toFixed(5)}`);
-    }
-
-    function jualSekarang() {
-      if (hargaBeli === null) {
-        logAktivitas("Kamu belum beli DOGE!");
-        return;
-      }
-      const fee = saldoDoge * lastHarga * feePersen;
-      const profit = (lastHarga - hargaBeli) * saldoDoge - fee;
-      logAktivitas(`Jual DOGE di $${lastHarga.toFixed(5)} | Profit bersih: $${profit.toFixed(5)}`);
-      hargaBeli = null;
-      hargaJualTarget = null;
-      document.getElementById("hargaBeli").innerText = '-';
-      document.getElementById("untung").innerText = '-';
-    }
-
-    function logAktivitas(pesan) {
-      const waktu = `[${new Date().toLocaleTimeString()}] ${pesan}`;
-      const log = JSON.parse(localStorage.getItem("dogeLog")) || [];
-      log.push(waktu);
-      localStorage.setItem("dogeLog", JSON.stringify(log.slice(-50)));
-      loadLog();
-    }
-
-    function loadLog() {
-      const log = JSON.parse(localStorage.getItem("dogeLog")) || [];
-      const container = document.getElementById("logArea");
-      container.innerHTML = "";
-      log.slice().reverse().forEach(msg => {
-        const p = document.createElement("p");
-        p.innerText = msg;
-        container.appendChild(p);
-      });
-    }
-
-    function clearLog() {
-      localStorage.removeItem("dogeLog");
-      loadLog();
-    }
-
-    loadLog();
-    setInterval(fetchHarga, 1500);
-  </script></body>
+    setInterval(fetchDogePrice, 2000);
+    fetchDogePrice();
+    updateProfit();
+  </script>
+</body>
 </html>
