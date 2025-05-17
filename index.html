@@ -1,137 +1,53 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bot Scalping DOGE Pintar</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Doge Scalping Bot</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-900">
-  <div class="max-w-xl mx-auto mt-10 bg-white shadow-md rounded-lg p-6">
-    <h1 class="text-2xl font-bold mb-4 text-center">Bot Scalping DOGE Pintar</h1>
+<body class="bg-gray-50 text-gray-800">
+<div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
+  <h1 class="text-2xl font-bold text-center mb-6">Doge Scalping SmartBot</h1>
 
-    <div class="mb-4">
-      <p>Harga DOGE Realtime: <span id="price" class="font-bold text-blue-600">-</span></p>
-      <p>Candle: <span id="candle" class="font-bold">-</span></p>
-      <p>Harga Ideal Beli (20 DOGE): <span id="idealBeli" class="text-green-600 font-semibold">-</span></p>
-      <p>Harga Ideal Jual (20 DOGE): <span id="idealJual" class="text-red-600 font-semibold">-</span></p>
-    </div>
+  <div class="mb-4"><b>doge kamu:</b> <span id="saldo">20</span></div>
+  <div class="mb-4"><b>harga 1 doge (real-time):</b> <span id="hargaRealtime">Loading...</span></div>
+  <div class="mb-4"><b>total harga 20 doge:</b> <span id="totalDogeHarga">-</span></div>
+  <div class="mb-4"><b>fee setiap transaksi:</b> <span id="feeTransaksi">0.004414 USDT</span></div>
 
-    <div class="mb-6">
-      <h2 class="font-bold mb-2">Manual Transaksi</h2>
-      <div class="mb-3">
-        <label class="text-sm">Harga Beli Manual (20 DOGE):</label>
-        <div class="flex gap-2">
-          <input id="hargaBeliManual" type="number" step="0.0001" placeholder="Total USDT" class="flex-1 border rounded px-3 py-1">
-          <button onclick="setManualBeli()" class="bg-green-500 text-white px-3 rounded">Set</button>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="text-sm">Harga Jual Manual (20 DOGE):</label>
-        <div class="flex gap-2">
-          <input id="hargaJualManual" type="number" step="0.0001" placeholder="Total USDT" class="flex-1 border rounded px-3 py-1">
-          <button onclick="setManualJual()" class="bg-red-500 text-white px-3 rounded">Set</button>
-        </div>
-      </div>
-      <p class="mt-2 text-sm">Untung: <span class="font-bold text-green-600" id="realUntung">-</span></p>
-      <p class="text-sm">Rugi: <span class="font-bold text-red-600" id="realRugi">-</span></p>
-      <p class="text-sm">Total Profit: <span class="font-bold text-blue-600" id="totalUntung">0.0000</span> USDT</p>
-    </div>
+  <div class="mb-4"><b>kamu membeli manual 20 doge di harga:</b> <span id="hargaBeliManualText">-</span></div>
+  <div class="mb-4"><b>ideal harga menjual 20 doge:</b> <span id="idealJual">-</span></div>
 
-    <div class="bg-gray-100 p-3 rounded h-48 overflow-y-auto text-sm" id="logBox">
-      <p class="text-gray-400 italic">Log Bot akan muncul di sini...</p>
+  <div class="mb-4"><b>kamu menjual manual 20 doge di harga:</b> <span id="hargaJualManualText">-</span></div>
+  <div class="mb-4"><b>ideal harga membeli 20 doge:</b> <span id="idealBeli">-</span></div>
+
+  <div class="mb-4"><b>untung:</b> <span id="untung">-</span></div>
+  <div class="mb-4"><b>rugi:</b> <span id="rugi">-</span></div>
+  <div class="mb-4"><b>seluruh untung:</b> <span id="seluruhUntung">0.0000 USDT</span></div>
+
+  <div class="mt-4">
+    <label class="text-sm">Set harga beli manual:</label>
+    <div class="flex gap-2 mt-1">
+      <input id="inputBeliManual" type="number" step="0.0001" class="border rounded px-3 py-2 w-full" placeholder="Contoh: 0.2123">
+      <button onclick="setHargaManual('beli')" class="bg-blue-500 text-white px-4 py-2 rounded">Kirim</button>
     </div>
   </div>
 
-  <script>
-    const priceEl = document.getElementById("price");
-    const candleEl = document.getElementById("candle");
-    const idealBeliEl = document.getElementById("idealBeli");
-    const idealJualEl = document.getElementById("idealJual");
-    const logBox = document.getElementById("logBox");
-    const fee = 0.004; // total fee beli+jual
-    let prevPrice = null;
-    let hargaBeliManual = null;
-    let hargaJualManual = null;
-    let totalProfit = parseFloat(localStorage.getItem("dogeSmartProfit") || "0");
+  <div class="mt-4">
+    <label class="text-sm">Set harga jual manual:</label>
+    <div class="flex gap-2 mt-1">
+      <input id="inputJualManual" type="number" step="0.0001" class="border rounded px-3 py-2 w-full" placeholder="Contoh: 0.2167">
+      <button onclick="setHargaManual('jual')" class="bg-blue-500 text-white px-4 py-2 rounded">Kirim</button>
+    </div>
+  </div>
 
-    function updateProfit() {
-      const untungEl = document.getElementById("realUntung");
-      const rugiEl = document.getElementById("realRugi");
-      const totalEl = document.getElementById("totalUntung");
+  <div class="mt-6 text-sm text-gray-500">
+    <p><b>Catatan:</b> Jika kamu isi harga beli manual, bot akan simulasi harga jual ideal yang profit (dan sebaliknya).</p>
+  </div>
 
-      if (hargaBeliManual && hargaJualManual) {
-        const spread = hargaJualManual - hargaBeliManual;
-        const hasil = spread - fee;
-        if (hasil >= 0) {
-          untungEl.innerText = `+$${hasil.toFixed(4)}`;
-          rugiEl.innerText = "$0.0000";
-        } else {
-          rugiEl.innerText = `-$${Math.abs(hasil).toFixed(4)}`;
-          untungEl.innerText = "$0.0000";
-        }
-        totalProfit += hasil;
-        localStorage.setItem("dogeSmartProfit", totalProfit.toFixed(4));
-        totalEl.innerText = totalProfit.toFixed(4);
-      }
-    }
-
-    function setManualBeli() {
-      const val = parseFloat(document.getElementById("hargaBeliManual").value);
-      if (!isNaN(val)) {
-        hargaBeliManual = val;
-        logAktivitas("Set harga beli manual: $" + val.toFixed(4));
-        updateProfit();
-      }
-    }
-
-    function setManualJual() {
-      const val = parseFloat(document.getElementById("hargaJualManual").value);
-      if (!isNaN(val)) {
-        hargaJualManual = val;
-        logAktivitas("Set harga jual manual: $" + val.toFixed(4));
-        updateProfit();
-      }
-    }
-
-    function logAktivitas(msg) {
-      const now = new Date().toLocaleTimeString();
-      const line = document.createElement("p");
-      line.textContent = `[${now}] ${msg}`;
-      logBox.appendChild(line);
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    function fetchHargaDOGE() {
-      fetch("https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT")
-        .then(res => res.json())
-        .then(data => {
-          const harga = parseFloat(data.price);
-          priceEl.innerText = "$" + harga.toFixed(4);
-
-          if (prevPrice !== null) {
-            if (harga > prevPrice) {
-              candleEl.innerHTML = "Naik <span class='text-green-600'>▲</span>";
-            } else if (harga < prevPrice) {
-              candleEl.innerHTML = "Turun <span class='text-red-600'>▼</span>";
-            } else {
-              candleEl.innerText = "Stabil";
-            }
-          }
-
-          const idealBuy = (harga * 20 * 0.995).toFixed(4); // beli lebih murah
-          const idealSell = (harga * 20 * 1.005).toFixed(4); // jual lebih mahal
-          idealBeliEl.innerText = `$${idealBuy}`;
-          idealJualEl.innerText = `$${idealSell}`;
-          prevPrice = harga;
-
-          logAktivitas("Harga update: $" + harga.toFixed(4));
-        });
-    }
-
-    setInterval(fetchHargaDOGE, 2000);
-    fetchHargaDOGE();
-    updateProfit();
-  </script>
-</body>
-</html>
+  <div class="mt-6 text-xs text-gray-600">
+    <p><b>Log:</b></p>
+    <div id="logArea" class="bg-gray-100 rounded p-2 max-h-32 overflow-y-auto space-y-1 mt-1 text-xs"></div>
+  </div>
+</div>
