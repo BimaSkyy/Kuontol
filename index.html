@@ -1,14 +1,14 @@
 <!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scalping DOGE Bot</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-    .card { box-shadow: 0 0 12px rgba(0,0,0,0.1); border-radius: 12px; }
-    #logs { max-height: 200px; overflow-y: auto; white-space: pre-wrap; background: #f1f1f1; padding: 10px; border-radius: 8px; }
-    .profit-box { font-weight: bold; }
+    .card { box-shadow: 0 0 12px rgba(0,0,0,0.1); }
+    #logs { max-height: 200px; overflow-y: auto; white-space: pre-wrap; background: #f1f1f1; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+    #totalKeuntungan { font-weight: bold; color: green; }
   </style>
 </head>
 <body>
@@ -18,26 +18,27 @@
       <div class="col-md-6">
         <div class="card p-3">
           <h5>Harga DOGE Saat Ini: <span id="hargaSekarang">Loading...</span></h5>
-          <p>Harga 20 DOGE: <span id="hargaTotal">Loading...</span></p>
-          <p>Fee Jual: <span id="feeJual">Loading...</span></p>
-          <p>Fee Beli: <span id="feeBeli">Loading...</span></p>
-          <hr>
-          <label>Harga Beli Manual</label>
-          <input type="number" id="hargaBeliManual" class="form-control" step="0.000001" /><label class="mt-2">Harga Jual Manual</label>
+          <p>Harga 20 DOGE: <span id="hargaTotal"></span></p>
+          <p>Fee Jual: <span id="feeJual"></span></p>
+          <p>Fee Beli: <span id="feeBeli"></span></p><label>Harga Beli Manual</label>
+      <input type="number" id="hargaBeliManual" class="form-control" step="0.000001" />
+
+      <label class="mt-2">Harga Jual Manual</label>
       <input type="number" id="hargaJualManual" class="form-control" step="0.000001" />
 
-      <button class="btn btn-primary mt-3" onclick="hitungProfit()">Hitung Potensi Profit</button>
+      <button class="btn btn-primary mt-3" onclick="hitungProfit(false)">Hitung Potensi Profit</button>
 
       <div class="mt-3">
-        <div id="hasilProfitText"></div>
-        <div id="rekomendasiText" class="text-muted small"></div>
-        <div id="aiSuggestion" class="mt-3"></div>
+        <p id="hasilProfitText"></p>
+        <p id="rekomendasiText"></p>
+        <p id="aiSuggestion"></p>
       </div>
 
-      <hr>
-      <p>Status Beli: <span id="statusBeli" class="fw-bold"></span></p>
-      <p>Status Jual: <span id="statusJual" class="fw-bold"></span></p>
-      <p>Total Keuntungan Terkumpul: <span id="totalKeuntungan" class="text-success fw-bold">$0.000000</span></p>
+      <div class="mt-3">
+        <p>Status beli: <span id="statusBeli"></span></p>
+        <p>Status jual: <span id="statusJual"></span></p>
+        <p>Total Keuntungan: <span id="totalKeuntungan">$0.000000</span></p>
+      </div>
     </div>
   </div>
 
@@ -52,6 +53,7 @@
   </div>  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>  <script>
     const dogeAmount = 20;
     let hargaSaatIni = 0;
+    let totalKeuntungan = parseFloat(localStorage.getItem('keuntunganTotal') || 0);
 
     function save(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
@@ -65,13 +67,6 @@
       const logs = document.getElementById('logs');
       logs.innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
       logs.scrollTop = logs.scrollHeight;
-    }
-
-    function simpanKeuntungan(profit) {
-      const total = load('totalProfit') || 0;
-      const baru = total + profit;
-      save('totalProfit', baru);
-      document.getElementById('totalKeuntungan').innerText = `$${baru.toFixed(6)}`;
     }
 
     async function ambilHargaDOGE() {
@@ -93,7 +88,7 @@
       }
     }
 
-    async function hitungProfit() {
+    function hitungProfit(simulasiMatch = false) {
       const beli = parseFloat(document.getElementById('hargaBeliManual').value);
       const jual = parseFloat(document.getElementById('hargaJualManual').value);
       if (isNaN(beli) || isNaN(jual)) return;
@@ -106,27 +101,30 @@
       const fee = (totalBeli + totalJual) * 0.001;
       const profit = totalJual - totalBeli - fee;
 
-      document.getElementById('hasilProfitText').innerHTML = `
-        <div class="alert ${profit > 0 ? 'alert-success' : 'alert-danger'}">
-          Potensi profit: $${profit.toFixed(6)}
-        </div>`;
+      document.getElementById('hasilProfitText').innerText = `Potensi profit jika beli di $${beli.toFixed(6)} dan jual di $${jual.toFixed(6)}: $${profit.toFixed(6)}`;
 
-      const rekomendasiJual = (totalBeli + fee) / dogeAmount;
-      document.getElementById('rekomendasiText').innerText = `Rekomendasi jual minimal di $${rekomendasiJual.toFixed(6)} untuk balik modal + untung setelah fee.`;
+      const rekomendasiJual = (totalBeli + fee + 0.0005) / dogeAmount;
+      document.getElementById('rekomendasiText').innerText = `Rekomendasi jual minimal: $${rekomendasiJual.toFixed(6)} untuk balik modal + untung.`;
 
-      log(`Hitung profit: beli $${beli}, jual $${jual}, profit $${profit.toFixed(6)}`);
-      if (profit > 0) simpanKeuntungan(profit);
+      log(`Simulasi profit dihitung: beli $${beli}, jual $${jual}, profit $${profit.toFixed(6)}`);
       mintaSaranAI(beli, jual);
+
+      if (simulasiMatch) {
+        totalKeuntungan += profit;
+        localStorage.setItem('keuntunganTotal', totalKeuntungan);
+        document.getElementById('totalKeuntungan').innerText = `$${totalKeuntungan.toFixed(6)}`;
+        log(`Profit $${profit.toFixed(6)} ditambahkan ke total karena jual match.`);
+      }
     }
 
     async function mintaSaranAI(beli, jual) {
-      const question = `Saya membeli 20 DOGE di harga ${beli} dan berencana menjual di harga ${jual}, dan harga pasar doge saat ini ${hargaSaatIni}, apakah itu keputusan yang bagus?`;
-      const sistem = `Kamu adalah WhyNotAi, asisten pintar untuk trading scalping 20 DOGE. Evaluasi apakah keputusan beli di $${beli} dan jual di $${jual} menguntungkan.`;
+      const question = `Saya beli DOGE di ${beli}, mau jual di ${jual}. Bagus atau tidak?`; // singkat
+      const sistem = `Kamu adalah WhyNotAi, asisten scalping. Balas ringkas.`;
 
       try {
         const { data } = await axios.get(`https://api.siputzx.my.id/api/ai/gpt3?prompt=${encodeURIComponent(sistem)}&content=${encodeURIComponent(question)}`);
-        const result = data.status ? data.data : 'AI gagal memberi respon.';
-        document.getElementById('aiSuggestion').innerHTML = `<div class="alert alert-info"><strong>WhyNotAi:</strong> ${result}</div>`;
+        const result = data.status ? data.data : 'AI gagal merespon.';
+        document.getElementById('aiSuggestion').innerText = `WhyNotAi: ${result}`;
         log('AI memberikan saran.');
       } catch (err) {
         document.getElementById('aiSuggestion').innerText = 'Gagal menghubungi AI.';
@@ -140,21 +138,18 @@
       if (!beli || !jual) return;
 
       if (hargaSaatIni <= beli) {
-        document.getElementById('statusBeli').innerText = 'TERBELI (Limit Order Match)';
-        document.getElementById('statusBeli').classList.add('text-success');
-        log('Limit beli 20 DOGE telah match.');
+        document.getElementById('statusBeli').innerText = 'TERBELI (Limit Match)';
+        log('Limit beli match.');
       } else {
         document.getElementById('statusBeli').innerText = 'BELUM TERBELI';
-        document.getElementById('statusBeli').classList.remove('text-success');
       }
 
       if (hargaSaatIni >= jual) {
-        document.getElementById('statusJual').innerText = 'TERJUAL (Limit Order Match)';
-        document.getElementById('statusJual').classList.add('text-success');
-        log('Limit jual 20 DOGE telah match.');
+        document.getElementById('statusJual').innerText = 'TERJUAL (Limit Match)';
+        hitungProfit(true); // hanya simpan profit saat match
+        log('Limit jual match, keuntungan dihitung.');
       } else {
         document.getElementById('statusJual').innerText = 'BELUM TERJUAL';
-        document.getElementById('statusJual').classList.remove('text-success');
       }
     }
 
@@ -162,8 +157,8 @@
     window.onload = () => {
       if (load('hargaBeliManual')) document.getElementById('hargaBeliManual').value = load('hargaBeliManual');
       if (load('hargaJualManual')) document.getElementById('hargaJualManual').value = load('hargaJualManual');
-      if (load('totalProfit')) document.getElementById('totalKeuntungan').innerText = `$${load('totalProfit').toFixed(6)}`;
+      document.getElementById('totalKeuntungan').innerText = `$${totalKeuntungan.toFixed(6)}`;
       ambilHargaDOGE();
-    }
+    };
   </script></body>
 </html>
