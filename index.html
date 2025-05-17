@@ -20,16 +20,17 @@
           <p>Harga 20 DOGE: <span id="hargaTotal"></span></p>
           <p>Fee Jual: <span id="feeJual"></span></p>
           <p>Fee Beli: <span id="feeBeli"></span></p><label>Harga Beli Manual</label>
-      <input type="number" id="hargaBeliManual" class="form-control" />
+      <input type="number" id="hargaBeliManual" class="form-control" step="0.000001" />
 
       <label class="mt-2">Harga Jual Manual</label>
-      <input type="number" id="hargaJualManual" class="form-control" />
+      <input type="number" id="hargaJualManual" class="form-control" step="0.000001" />
 
       <button class="btn btn-primary mt-3" onclick="hitungProfit()">Hitung Potensi Profit</button>
 
       <div class="mt-3">
-        <p>Profit jika beli di <span id="beliDi"></span> dan jual di <span id="jualDi"></span>: <strong><span id="hasilProfit"></span></strong></p>
-        <p>Rekomendasi jual jika beli di <span id="rekomBeli"></span>: <strong><span id="rekomJual"></span></strong></p>
+        <p id="hasilProfitText"></p>
+        <p id="rekomendasiText"></p>
+        <p id="aiSuggestion"></p>
       </div>
 
       <div class="mt-3">
@@ -47,7 +48,7 @@
   </div>
 </div>
 
-  </div>  <script>
+  </div>  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>  <script>
     const dogeAmount = 20;
     let hargaSaatIni = 0;
 
@@ -74,9 +75,9 @@
         const fee = total * 0.001; // fee 0.1%
 
         document.getElementById('hargaSekarang').innerText = hargaSaatIni.toFixed(6);
-        document.getElementById('hargaTotal').innerText = `$${total.toFixed(4)}`;
-        document.getElementById('feeJual').innerText = `$${fee.toFixed(4)}`;
-        document.getElementById('feeBeli').innerText = `$${fee.toFixed(4)}`;
+        document.getElementById('hargaTotal').innerText = `$${total.toFixed(6)}`;
+        document.getElementById('feeJual').innerText = `$${fee.toFixed(6)}`;
+        document.getElementById('feeBeli').innerText = `$${fee.toFixed(6)}`;
 
         cekAutoOrder();
       } catch (err) {
@@ -84,7 +85,7 @@
       }
     }
 
-    function hitungProfit() {
+    async function hitungProfit() {
       const beli = parseFloat(document.getElementById('hargaBeliManual').value);
       const jual = parseFloat(document.getElementById('hargaJualManual').value);
       if (isNaN(beli) || isNaN(jual)) return;
@@ -97,15 +98,33 @@
       const fee = (totalBeli + totalJual) * 0.001;
       const profit = totalJual - totalBeli - fee;
 
-      document.getElementById('beliDi').innerText = beli;
-      document.getElementById('jualDi').innerText = jual;
-      document.getElementById('hasilProfit').innerText = `$${profit.toFixed(4)}`;
+      document.getElementById('hasilProfitText').innerText = `rekomendasi jual 20 doge kamu yang kamu beli di harga ${beli.toFixed(6)} kamu jual di harga limit order ${jual.toFixed(6)} maka kamu dapat untung $${profit.toFixed(6)} jika tidak juga tidak masalah`;
 
-      const rekomendasiJual = (beli * dogeAmount + fee) / dogeAmount;
-      document.getElementById('rekomBeli').innerText = beli;
-      document.getElementById('rekomJual').innerText = rekomendasiJual.toFixed(6);
+      const rekomendasiJual = (totalBeli + fee) / dogeAmount;
+      document.getElementById('rekomendasiText').innerText = `Rekomendasi jika kamu membeli 20 doge di $${beli.toFixed(6)} saya rekomendasikan menjual di harga $${rekomendasiJual.toFixed(6)} karena untung yang kamu dapat $${(rekomendasiJual * dogeAmount - totalBeli - fee).toFixed(6)} dikurangi fee`;
 
-      log(`Hitung profit: beli ${beli}, jual ${jual}, profit $${profit.toFixed(4)}`);
+      log(`Hitung profit: beli ${beli}, jual ${jual}, profit $${profit.toFixed(6)}`);
+      mintaSaranAI(beli, jual);
+    }
+
+    async function mintaSaranAI(beli, jual) {
+      const name = 'User';
+      const current = `Harga beli 20 DOGE di ${beli}, harga jual di ${jual}`;
+      const question = `Saya membeli 20 DOGE di harga ${beli} dan berencana menjual di harga ${jual}, apakah menurut kamu itu keputusan yang bagus?`;
+      const dateNow = new Date().toLocaleDateString('id-ID');
+      const timeNow = new Date().toLocaleTimeString('id-ID');
+      let sistem = `Kamu adalah WhyNotAi, asisten pintar dari grup Whats Not. Hari ini tanggal ${dateNow}, sekarang pukul ${timeNow}. Lawan bicaramu bernama ${name}. Jawab dengan gaya santai, tidak kaku, dan tetap informatif.`;
+      if (current) sistem += ` Sebelumnya kamu membahas: ${current}`;
+
+      try {
+        const { data } = await axios.get(`https://api.siputzx.my.id/api/ai/gpt3?prompt=${encodeURIComponent(sistem)}&content=${encodeURIComponent(question)}`);
+        const result = data.status ? data.data : 'AI gagal memberi respon.';
+        document.getElementById('aiSuggestion').innerText = `WhyNotAi: ${result}`;
+        log('AI memberikan saran.');
+      } catch (err) {
+        document.getElementById('aiSuggestion').innerText = 'Gagal menghubungi AI.';
+        log('Gagal menghubungi AI.');
+      }
     }
 
     function cekAutoOrder() {
