@@ -1,165 +1,110 @@
-<!DOCTYPE html><html lang="en">
+# Doge Trading Assistant
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Doge Scalping SmartBot</title>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doge Trading Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        .logs {
+            margin-top: 20px;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-gray-100 to-white min-h-screen font-sans">
-<div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-3xl shadow-2xl border border-gray-200">
-  <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">Doge Scalping SmartBot</h1>  <div class="space-y-3">
-    <div><b>Saldo DOGE:</b> <span id="saldo">20</span></div>
-    <div class="flex items-center gap-2">
-      <b>Harga DOGE (real-time):</b>
-      <span id="hargaRealtime">Loading...</span>
-      <span id="hargaIcon" class="text-xl"></span>
+<body>
+
+<div class="container">
+    <h1>Doge Trading Assistant</h1>
+    
+    <div class="input-group">
+        <label for="dogePrice">Current Price of 1 DOGE:</label>
+        <input type="number" id="dogePrice" placeholder="Enter price" />
     </div>
-    <div><b>Total (20 DOGE):</b> <span id="totalDogeHarga">-</span></div>
-    <div><b>Fee per transaksi:</b> <span id="feeTransaksi">0.004414 USDT</span></div><div><b>Harga Beli Manual:</b> <span id="hargaBeliManualText">-</span></div>
-<div><b>Harga Jual Ideal (auto hitung):</b> <span id="idealJual">-</span></div>
-
-<div><b>Harga Jual Manual:</b> <span id="hargaJualManualText">-</span></div>
-<div><b>Harga Beli Ideal (auto hitung):</b> <span id="idealBeli">-</span></div>
-
-<div><b>Limit Harga Tertinggi Jual:</b> <span id="limitHargaText">-</span></div>
-
-<div><b>Untung:</b> <span id="untung">-</span></div>
-<div><b>Rugi:</b> <span id="rugi">-</span></div>
-<div><b>Total Untung:</b> <span id="seluruhUntung">0.000000 USDT</span></div>
-
-  </div>  <div class="mt-6 space-y-4">
-    <div>
-      <label class="text-sm font-medium">Set harga beli manual:</label>
-      <div class="flex gap-2 mt-1">
-        <input id="inputBeliManual" type="number" step="0.0001" class="border rounded px-3 py-2 w-full" placeholder="Contoh: 0.2123">
-        <button onclick="setHargaManual('beli')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Kirim</button>
-      </div>
-    </div><div>
-  <label class="text-sm font-medium">Set harga jual manual:</label>
-  <div class="flex gap-2 mt-1">
-    <input id="inputJualManual" type="number" step="0.0001" class="border rounded px-3 py-2 w-full" placeholder="Contoh: 0.2167">
-    <button onclick="setHargaManual('jual')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Kirim</button>
-  </div>
+    
+    <div class="input-group">
+        <label for="dogeAmount">Amount of DOGE (default 20):</label>
+        <input type="number" id="dogeAmount" value="20" readonly />
+    </div>
+    
+    <div class="input-group">
+        <label for="sellPrice">Set Limit Order Sell Price:</label>
+        <input type="number" id="sellPrice" placeholder="Enter sell price" />
+    </div>
+    
+    <div class="input-group">
+        <label for="buyPrice">Set Limit Order Buy Price:</label>
+        <input type="number" id="buyPrice" placeholder="Enter buy price" />
+    </div>
+    
+    <button class="button" onclick="calculateProfit()">Calculate Profit</button>
+    
+    <div class="logs" id="logs"></div>
 </div>
 
-<div>
-  <label class="text-sm font-medium">Set Limit Harga Tertinggi Jual:</label>
-  <div class="flex gap-2 mt-1">
-    <input id="limitHargaInput" type="number" step="0.0001" class="border rounded px-3 py-2 w-full" placeholder="Contoh: 0.2280">
-    <button onclick="setLimitHarga()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Set Limit</button>
-  </div>
-</div>
-
-<div class="flex gap-4 mt-4">
-  <button onclick="manualAksi('beli')" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded">Saya Membeli</button>
-  <button onclick="manualAksi('jual')" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded">Saya Menjual</button>
-</div>
-
-  </div>  <div class="mt-6 text-sm text-gray-600">
-    <b>Log Aktivitas:</b>
-    <div id="logArea" class="bg-gray-100 rounded p-2 max-h-40 overflow-y-auto space-y-1 mt-1 text-xs"></div>
-  </div>
-</div><script>
-let saldoDoge = 20;
-let fee = 0.004414;
-let seluruhUntung = 0;
-let hargaSebelumnya = 0;
-let hargaBeliManual = null;
-let hargaJualManual = null;
-let limitHargaTertinggi = null;
-
-function updateLog(msg) {
-  const log = document.getElementById("logArea");
-  const waktu = new Date().toLocaleTimeString();
-  log.innerHTML = `<div>[${waktu}] ${msg}</div>` + log.innerHTML;
-}
-
-function formatUSDT(val) {
-  return parseFloat(val).toFixed(6) + " USDT";
-}
-
-function setHargaManual(tipe) {
-  const val = parseFloat(document.getElementById(tipe === "beli" ? "inputBeliManual" : "inputJualManual").value);
-  if (!val) return;
-
-  if (tipe === "beli") {
-    hargaBeliManual = val;
-    document.getElementById("hargaBeliManualText").textContent = val;
-    const ideal = ((val * saldoDoge) + fee) / saldoDoge;
-    document.getElementById("idealJual").textContent = formatUSDT(ideal);
-    updateLog(`Set harga beli di ${val}, jual ideal: ${ideal.toFixed(6)}`);
-  } else {
-    hargaJualManual = val;
-    document.getElementById("hargaJualManualText").textContent = val;
-    const ideal = ((val * saldoDoge) - fee) / saldoDoge;
-    document.getElementById("idealBeli").textContent = formatUSDT(ideal);
-    updateLog(`Set harga jual di ${val}, beli ideal: ${ideal.toFixed(6)}`);
-  }
-}
-
-function setLimitHarga() {
-  const val = parseFloat(document.getElementById("limitHargaInput").value);
-  if (!val) return;
-  limitHargaTertinggi = val;
-  document.getElementById("limitHargaText").textContent = val;
-  updateLog(`Set limit harga jual maksimum: ${val}`);
-}
-
-function manualAksi(tipe) {
-  const harga = hargaSebelumnya;
-  if (tipe === "beli") {
-    hargaBeliManual = harga;
-    document.getElementById("hargaBeliManualText").textContent = harga;
-    updateLog(`Kamu membeli di ${harga}`);
-  } else {
-    hargaJualManual = harga;
-    document.getElementById("hargaJualManualText").textContent = harga;
-    const profit = (harga * saldoDoge) - (hargaBeliManual * saldoDoge) - fee;
-    if (profit > 0) seluruhUntung += profit;
-    updateLog(`Kamu menjual di ${harga}, profit: ${formatUSDT(profit)}`);
-    hargaBeliManual = null;
-    document.getElementById("hargaBeliManualText").textContent = "-";
-  }
-  document.getElementById("seluruhUntung").textContent = formatUSDT(seluruhUntung);
-}
-
-async function getHarga() {
-  try {
-    const res = await axios.get("https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT");
-    const harga = parseFloat(res.data.price);
-    document.getElementById("hargaRealtime").textContent = harga;
-    document.getElementById("totalDogeHarga").textContent = formatUSDT(harga * saldoDoge);
-
-    const icon = document.getElementById("hargaIcon");
-    icon.textContent = harga > hargaSebelumnya ? "▲" : harga < hargaSebelumnya ? "▼" : "";
-    icon.className = harga > hargaSebelumnya ? "text-green-600 text-xl" : harga < hargaSebelumnya ? "text-red-600 text-xl" : "text-gray-400 text-xl";
-    hargaSebelumnya = harga;
-
-    if (limitHargaTertinggi && harga >= limitHargaTertinggi) {
-      updateLog(`Harga menyentuh limit tertinggi ${harga} > ${limitHargaTertinggi}, reset harga jual.`);
-      hargaJualManual = null;
-      document.getElementById("hargaJualManualText").textContent = "-";
+<script>
+    function calculateProfit() {
+        const dogePrice = parseFloat(document.getElementById('dogePrice').value);
+        const dogeAmount = parseFloat(document.getElementById('dogeAmount').value);
+        const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+        const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+        
+        const totalCost = dogeAmount * buyPrice;
+        const totalRevenue = dogeAmount * sellPrice;
+        const profit = totalRevenue - totalCost;
+        
+        document.getElementById('logs').innerHTML = `
+            <p>Current Price of 1 DOGE: $${dogePrice}</p>
+            <p>Total Cost for ${dogeAmount} DOGE: $${totalCost.toFixed(2)}</p>
+            <p>Total Revenue from selling ${dogeAmount} DOGE: $${totalRevenue.toFixed(2)}</p>
+            <p>Profit: $${profit.toFixed(2)}</p>
+        `;
     }
+</script>
 
-    if (hargaBeliManual && hargaJualManual === null) {
-      const idealJual = ((hargaBeliManual * saldoDoge) + fee) / saldoDoge;
-      if (harga >= idealJual) {
-        const profit = (harga * saldoDoge) - (hargaBeliManual * saldoDoge) - fee;
-        seluruhUntung += profit;
-        updateLog(`Auto jual di ${harga}, profit: ${formatUSDT(profit)}`);
-        hargaBeliManual = null;
-        document.getElementById("hargaBeliManualText").textContent = "-";
-      }
-    }
-
-    document.getElementById("seluruhUntung").textContent = formatUSDT(seluruhUntung);
-  } catch (e) {
-    updateLog("Gagal ambil harga Binance");
-  }
-}
-
-setInterval(getHarga, 2000);
-getHarga();
-</script></body>
+</body>
 </html>
