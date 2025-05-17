@@ -2,83 +2,180 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scalping DOGE Bot</title>
+  <title>Doge Scalping Bot Realistis</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-<body class="bg-gray-100 p-4 text-gray-800">
-  <div class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-6">
-    <h1 class="text-2xl font-bold mb-4">DOGE Scalping Tracker</h1><div class="mb-4">
-  <p>Harga Sekarang: <span id="hargaSekarang">Loading...</span></p>
-  <p>Harga Beli: <span id="hargaBeli">-</span></p>
-  <p>Harga Ideal Jual: <span id="hargaIdealJual">-</span></p>
-  <p>Target Harga Ideal Beli: <span id="hargaIdealBeli">-</span></p>
-  <p>Keuntungan Saat Ini: <span id="keuntungan">-</span></p>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
+    <h1 class="text-2xl font-bold text-center mb-6">Doge Scalping Bot</h1><div class="mb-4">
+  <p class="font-semibold">Saldo DOGE:</p>
+  <p id="saldoDoge">20 DOGE</p>
 </div>
 
-<!-- Input Harga Manual -->
-<div class="mt-6">
-  <label class="block text-sm font-semibold mb-1">Simulasi Harga Beli Manual:</label>
-  <input type="number" step="0.00001" id="inputManualBeli" class="w-full p-2 border rounded" placeholder="Misal: 0.12345">
-  <button onclick="setHargaBeliManual()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">Set Harga Beli</button>
+<div class="mb-4">
+  <label class="block font-semibold mb-1">Set Harga Beli Manual ($):</label>
+  <input id="inputHargaBeli" type="number" step="0.00001" class="w-full p-2 border rounded" placeholder="Misal 0.15500">
 </div>
 
-<!-- Input Target Harga Ideal Beli -->
-<div class="mt-4">
-  <label class="block text-sm font-semibold mb-1">Target Harga Ideal untuk Beli:</label>
-  <input type="number" step="0.00001" id="inputTargetBeli" class="w-full p-2 border rounded" placeholder="Misal: 0.11800">
-  <button onclick="setTargetBeli()" class="mt-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-1 rounded">Set Target Ideal Beli</button>
+<div class="mb-4">
+  <label class="block font-semibold mb-1">Set Harga Jual Target ($):</label>
+  <input id="inputHargaJual" type="number" step="0.00001" class="w-full p-2 border rounded" placeholder="Misal 0.15700">
 </div>
 
-<!-- Log Aktivitas -->
-<div class="mt-6">
-  <h2 class="font-semibold text-lg mb-2">Log Aktivitas</h2>
-  <div id="logAktivitas" class="text-sm h-40 overflow-y-auto bg-gray-100 p-2 border rounded"></div>
+<div class="mb-4">
+  <p class="font-semibold">Harga Pasar (Realtime):</p>
+  <p id="hargaPasar">Loading...</p>
+</div>
+
+<div class="mb-4">
+  <p class="font-semibold">Fee Transaksi (0.1%):</p>
+  <p id="feeTransaksi">-</p>
+</div>
+
+<div class="mb-4">
+  <p class="font-semibold">Harga Beli Terakhir:</p>
+  <p id="hargaBeli">-</p>
+</div>
+
+<div class="mb-4">
+  <p class="font-semibold">Keuntungan:</p>
+  <p id="untung">-</p>
+</div>
+
+<div class="mt-6 flex space-x-4">
+  <button onclick="beliManual()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Set Harga Beli</button>
+  <button onclick="jualManual()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Set Harga Jual</button>
+</div>
+
+<div class="mt-6 flex space-x-4">
+  <button onclick="beliSekarang()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Saya Telah Membeli</button>
+  <button onclick="jualSekarang()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Saya Telah Menjual</button>
+</div>
+
+<div class="mt-6 text-sm text-gray-500">
+  <p id="candleHint" class="font-semibold text-blue-600"></p>
+</div>
+
+<div class="mt-6 text-sm text-gray-600">
+  <div class="flex justify-between items-center mb-1">
+    <p class="font-semibold">Log Aktivitas:</p>
+    <button onclick="clearLog()" class="text-red-500 hover:underline text-xs">Hapus Semua</button>
+  </div>
+  <div id="logArea" class="space-y-1 max-h-40 overflow-y-auto text-xs bg-gray-100 p-2 rounded"></div>
 </div>
 
   </div>  <script>
+    const saldoDoge = 20;
+    const feePersen = 0.001; // 0.1%
     let hargaBeli = null;
+    let hargaJualTarget = null;
+    let lastHarga = null;
+    let previousHarga = null;
+    let lastSignal = '';
 
-    async function getHargaDOGE() {
+    async function fetchHarga() {
       try {
-        const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT");
-        const data = await response.json();
-        const harga = parseFloat(data.price);
-        document.getElementById("hargaSekarang").innerText = `$${harga.toFixed(5)}`;
+        const res = await axios.get('https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT');
+        const harga = parseFloat(res.data.price);
+        const totalUSDT = harga * saldoDoge;
+        const fee = totalUSDT * feePersen;
+
+        document.getElementById("hargaPasar").innerText = `$${totalUSDT.toFixed(4)} (total)`;
+        document.getElementById("feeTransaksi").innerText = `$${fee.toFixed(5)}`;
+
+        if (lastHarga !== null) {
+          const hargaEl = document.getElementById("hargaPasar");
+          hargaEl.style.color = harga > lastHarga ? 'green' : harga < lastHarga ? 'red' : 'black';
+        }
+
+        lastHarga = harga;
 
         if (hargaBeli !== null) {
-          const keuntungan = harga - hargaBeli;
-          document.getElementById("keuntungan").innerText = `${keuntungan >= 0 ? '+' : ''}$${keuntungan.toFixed(5)}`;
+          const untung = (harga - hargaBeli) * saldoDoge - fee;
+          document.getElementById("untung").innerText = `$${untung.toFixed(5)}`;
+          document.getElementById("hargaBeli").innerText = `$${hargaBeli.toFixed(5)}`;
         }
-      } catch (error) {
-        console.error("Gagal memuat harga:", error);
+
+        if (previousHarga !== null) {
+          if (harga > previousHarga + 0.001 && lastSignal !== 'up') {
+            document.getElementById("candleHint").innerText = "Candle naik cepat, pertimbangkan JUAL";
+            logAktivitas("Candle naik cepat!");
+            lastSignal = 'up';
+          } else if (harga < previousHarga - 0.001 && lastSignal !== 'down') {
+            document.getElementById("candleHint").innerText = "Candle turun cepat, pertimbangkan BELI";
+            logAktivitas("Candle turun cepat!");
+            lastSignal = 'down';
+          }
+        }
+
+        previousHarga = harga;
+      } catch (e) {
+        document.getElementById("hargaPasar").innerText = `Gagal ambil harga`;
+        logAktivitas("Gagal ambil data harga.");
       }
     }
 
-    function setHargaBeliManual() {
-      const input = parseFloat(document.getElementById("inputManualBeli").value);
+    function beliManual() {
+      const input = parseFloat(document.getElementById("inputHargaBeli").value);
       if (!isNaN(input)) {
         hargaBeli = input;
-        logAktivitas(`Harga beli diset manual: $${input.toFixed(5)}`);
-        document.getElementById("hargaBeli").innerText = `$${hargaBeli.toFixed(5)}`;
-        document.getElementById("hargaIdealJual").innerText = `$${(hargaBeli + 0.002).toFixed(5)}`;
+        logAktivitas(`Set harga beli ke $${input.toFixed(5)}`);
       }
     }
 
-    function setTargetBeli() {
-      const target = parseFloat(document.getElementById("inputTargetBeli").value);
-      if (!isNaN(target)) {
-        document.getElementById("hargaIdealBeli").innerText = `$${target.toFixed(5)}`;
-        logAktivitas(`Target ideal beli diset ke: $${target.toFixed(5)}`);
+    function jualManual() {
+      const input = parseFloat(document.getElementById("inputHargaJual").value);
+      if (!isNaN(input)) {
+        hargaJualTarget = input;
+        logAktivitas(`Set harga jual target ke $${input.toFixed(5)}`);
       }
+    }
+
+    function beliSekarang() {
+      hargaBeli = lastHarga;
+      logAktivitas(`Beli DOGE di $${hargaBeli.toFixed(5)}`);
+    }
+
+    function jualSekarang() {
+      if (hargaBeli === null) {
+        logAktivitas("Kamu belum beli DOGE!");
+        return;
+      }
+      const fee = saldoDoge * lastHarga * feePersen;
+      const profit = (lastHarga - hargaBeli) * saldoDoge - fee;
+      logAktivitas(`Jual DOGE di $${lastHarga.toFixed(5)} | Profit bersih: $${profit.toFixed(5)}`);
+      hargaBeli = null;
+      hargaJualTarget = null;
+      document.getElementById("hargaBeli").innerText = '-';
+      document.getElementById("untung").innerText = '-';
     }
 
     function logAktivitas(pesan) {
-      const logDiv = document.getElementById("logAktivitas");
-      const waktu = new Date().toLocaleTimeString();
-      logDiv.innerHTML = `[${waktu}] ${pesan}<br>` + logDiv.innerHTML;
+      const waktu = `[${new Date().toLocaleTimeString()}] ${pesan}`;
+      const log = JSON.parse(localStorage.getItem("dogeLog")) || [];
+      log.push(waktu);
+      localStorage.setItem("dogeLog", JSON.stringify(log.slice(-50)));
+      loadLog();
     }
 
-    setInterval(getHargaDOGE, 2000);
-    getHargaDOGE();
+    function loadLog() {
+      const log = JSON.parse(localStorage.getItem("dogeLog")) || [];
+      const container = document.getElementById("logArea");
+      container.innerHTML = "";
+      log.slice().reverse().forEach(msg => {
+        const p = document.createElement("p");
+        p.innerText = msg;
+        container.appendChild(p);
+      });
+    }
+
+    function clearLog() {
+      localStorage.removeItem("dogeLog");
+      loadLog();
+    }
+
+    loadLog();
+    setInterval(fetchHarga, 1500);
   </script></body>
 </html>
