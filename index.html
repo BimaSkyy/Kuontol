@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Doge Scalping Bot</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <title>Doge Scalping SmartBot</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
 <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
   <h1 class="text-2xl font-bold text-center mb-6">Doge Scalping SmartBot</h1>
 
   <div class="mb-4"><b>doge kamu:</b> <span id="saldo">20</span></div>
-  <div class="mb-4"><b>harga 1 doge (real-time):</b> <span id="hargaRealtime">Loading...</span></div>
+  <div class="mb-4 flex items-center space-x-2">
+    <b>harga 1 doge (real-time):</b>
+    <span id="hargaRealtime">Loading...</span>
+    <span id="hargaIcon" class="text-xl"></span>
+  </div>
   <div class="mb-4"><b>total harga 20 doge:</b> <span id="totalDogeHarga">-</span></div>
   <div class="mb-4"><b>fee setiap transaksi:</b> <span id="feeTransaksi">0.004414 USDT</span></div>
 
@@ -42,8 +46,8 @@
     </div>
   </div>
 
-  <div class="mt-6 text-sm text-gray-500">
-    <p><b>Catatan:</b> Jika kamu isi harga beli manual, bot akan simulasi harga jual ideal yang profit (dan sebaliknya).</p>
+  <div class="mt-6 text-xs text-gray-600">
+    <p><b>Catatan:</b> Bot akan simulasi harga beli/jual ideal agar tidak rugi karena fee (0.004414).</p>
   </div>
 
   <div class="mt-6 text-xs text-gray-600">
@@ -51,3 +55,88 @@
     <div id="logArea" class="bg-gray-100 rounded p-2 max-h-32 overflow-y-auto space-y-1 mt-1 text-xs"></div>
   </div>
 </div>
+
+<script>
+let hargaSebelumnya = 0;
+let saldoDoge = 20;
+let fee = 0.004414;
+let seluruhUntung = 0;
+let hargaBeliManual = null;
+let hargaJualManual = null;
+
+function updateLog(msg) {
+  const log = document.getElementById("logArea");
+  const waktu = new Date().toLocaleTimeString();
+  log.innerHTML = `<div>[${waktu}] ${msg}</div>` + log.innerHTML;
+}
+
+function formatUSDT(val) {
+  return parseFloat(val).toFixed(6) + " USDT";
+}
+
+function setHargaManual(tipe) {
+  const val = parseFloat(document.getElementById(tipe === "beli" ? "inputBeliManual" : "inputJualManual").value);
+  if (!val) return;
+
+  if (tipe === "beli") {
+    hargaBeliManual = val;
+    document.getElementById("hargaBeliManualText").textContent = val;
+    const ideal = ((val * saldoDoge) + fee) / saldoDoge;
+    document.getElementById("idealJual").textContent = formatUSDT(ideal);
+    updateLog(`Set harga beli manual di ${val}, jual ideal: ${ideal.toFixed(6)}`);
+  } else {
+    hargaJualManual = val;
+    document.getElementById("hargaJualManualText").textContent = val;
+    const ideal = ((val * saldoDoge) - fee) / saldoDoge;
+    document.getElementById("idealBeli").textContent = formatUSDT(ideal);
+    updateLog(`Set harga jual manual di ${val}, beli ideal: ${ideal.toFixed(6)}`);
+  }
+}
+
+async function getHarga() {
+  try {
+    const res = await axios.get("https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT");
+    const harga = parseFloat(res.data.price);
+    document.getElementById("hargaRealtime").textContent = harga;
+    document.getElementById("totalDogeHarga").textContent = formatUSDT(harga * saldoDoge);
+
+    // Icon naik/turun
+    const icon = document.getElementById("hargaIcon");
+    if (harga > hargaSebelumnya) {
+      icon.textContent = "▲";
+      icon.className = "text-green-600 text-xl";
+    } else if (harga < hargaSebelumnya) {
+      icon.textContent = "▼";
+      icon.className = "text-red-600 text-xl";
+    } else {
+      icon.textContent = "";
+    }
+    hargaSebelumnya = harga;
+
+    // Cek simulasi untung/rugi
+    if (hargaBeliManual) {
+      const totalJual = harga * saldoDoge - fee;
+      const totalBeli = hargaBeliManual * saldoDoge;
+      const untung = totalJual - totalBeli;
+      document.getElementById("untung").textContent = untung > 0 ? formatUSDT(untung) : "-";
+      document.getElementById("rugi").textContent = untung < 0 ? formatUSDT(Math.abs(untung)) : "-";
+    }
+
+    if (hargaJualManual) {
+      const totalBeli = harga * saldoDoge + fee;
+      const totalJual = hargaJualManual * saldoDoge;
+      const untung = totalJual - totalBeli;
+      document.getElementById("untung").textContent = untung > 0 ? formatUSDT(untung) : "-";
+      document.getElementById("rugi").textContent = untung < 0 ? formatUSDT(Math.abs(untung)) : "-";
+    }
+
+  } catch (err) {
+    updateLog("Gagal mengambil harga dari Binance.");
+  }
+}
+
+setInterval(getHarga, 2000);
+getHarga();
+</script>
+</body>
+</html>
